@@ -2,81 +2,74 @@
 // Created by not_tyche on 30/06/20.
 //
 
-#include "Graphic.h"
-#include <cmath>
+#include "application.h"
+#include <iostream>
+#include <cstdlib>
+#include <allegro5/allegro.h>
 
-#ifndef steps
-#define steps 50
-#endif
+#define SCREEN_WIDTH  600
+#define SCREEN_HEIGHT 600
 
-int main(int argc, char **argv)
-{
-    int N = 4;
+using namespace std;
 
-    int showWidth = 1280; //set to 10 for the parallel speed test
-    int showHeight = 720; //set to 10 for the parallel speed test
+int main(int argc, char** argv) {
 
-    bool done = false;
-    int FPS = 25;
-
-    ALLEGRO_EVENT_QUEUE *event_queue = NULL;
-    ALLEGRO_TIMER *timer = NULL;
-
-    if(!al_init())
-        return -1;
-
-    ALLEGRO_DISPLAY *display = al_create_display(showWidth,showHeight);
-    ALLEGRO_BITMAP *buffer = al_create_bitmap(showWidth,showHeight);
-
-
-    int windowHeight = al_get_display_height(display);
-    int windowWidth = al_get_display_width(display);
-    float sx = windowWidth / float(showWidth);
-    float sy = windowHeight / float(showHeight);
-    int scale = std::min(sx, sy);
-    int scaleW = showWidth * scale;
-    int scaleH = showHeight * scale;
-    int scaleX = (windowWidth - scaleW) / 2;
-    int scaleY = (windowHeight - scaleH) / 2;
-    al_set_window_title(display, "FRACTAL");
-    al_set_target_bitmap(buffer);
-    al_clear_to_color(al_map_rgb(0, 0, 0));
+    al_init();
     al_install_keyboard();
-    event_queue = al_create_event_queue();
-    timer = al_create_timer(3.0/FPS);
+
+    al_set_app_name("FRACTAL");
 
 
-    Graphic manager(scaleW, scaleH, scaleX, scaleY, buffer, display,N);
+    ALLEGRO_EVENT_QUEUE* queue;
+    if((queue = al_create_event_queue()) == nullptr)
+        return std::cerr << "al_create_event_queue() failed!" << std::endl, 1;
 
-    al_register_event_source(event_queue, al_get_keyboard_event_source());
-    al_register_event_source(event_queue, al_get_display_event_source(display));
-    al_register_event_source(event_queue, al_get_timer_event_source(timer));
+    ALLEGRO_DISPLAY* disp;
+    if((disp = al_create_display(SCREEN_WIDTH, SCREEN_HEIGHT)) == nullptr)
+        return std::cerr << "al_create_display() failed!" << std::endl, 1;
+
+    ALLEGRO_TIMER* timer;
+    if((timer = al_create_timer(1 / GAME_FRAME_PER_SECOND)) == nullptr)
+        return std::cerr << "al_create_timer() failed!" << std::endl, 1;
+
+
+    al_set_window_title(disp, "FRACTAL");
+
+
+    al_register_event_source(queue, al_get_keyboard_event_source());
+    al_register_event_source(queue, al_get_display_event_source(disp));
+    al_register_event_source(queue, al_get_timer_event_source(timer));
+
     al_start_timer(timer);
+    application app;
 
-    while(!done)
-    {
-        ALLEGRO_EVENT ev;
-        al_wait_for_event(event_queue, &ev);
+    do {
 
-        if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
-            done = true;
+        ALLEGRO_EVENT e;
+        al_wait_for_event(queue, &e);
 
-        else if(ev.type == ALLEGRO_EVENT_KEY_UP)
-            if(ev.keyboard.keycode==ALLEGRO_KEY_ESCAPE)
-                done=true;
+        switch(e.type) {
 
-        if(!done && al_is_event_queue_empty(event_queue))
-        {
-            manager.drawMap();
-            al_flip_display();
+            case ALLEGRO_EVENT_TIMER:
+                app.draw(&e);
+                al_flip_display();
+                break;
+
+            case ALLEGRO_EVENT_KEY_DOWN:
+            case ALLEGRO_EVENT_KEY_UP:
+                app.update(&e);
+                break;
+
+            case ALLEGRO_EVENT_DISPLAY_CLOSE:
+                app.exit();
+                break;
         }
 
-    }
+    } while(app.isRunning());
 
-    al_destroy_event_queue(event_queue);
+    al_destroy_event_queue(queue);
     al_destroy_timer(timer);
-    al_destroy_display(display);
+    al_destroy_display(disp);
 
     return 0;
 }
-
