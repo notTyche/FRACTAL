@@ -19,25 +19,20 @@ class FRACTAL {
 
         FRACTAL(): swap(false) {
 
-            srand(time(0));
+            //srand(time(0));
 
             this->fractal = new bool* [WIDTH];
             for (int i = 0; i < WIDTH; ++i)
                 this->fractal[i] = new bool[HEIGHT];
 
-//            for (auto i = 0; i < WIDTH; ++i)
-//                for (auto j = 0; j < HEIGHT; ++j)
-//                    this->fractal[i][j] =  rand()%2;
+            for (auto i = 0; i < WIDTH; ++i)
+                for (auto j = 0; j < HEIGHT; ++j)
+                    this->fractal[i][j] =  false;
 
-            this->fractal[10][11];
-            this->fractal[11][12];
-            this->fractal[13][14];
-            this->fractal[20][21];
-            this->fractal[22][32];
-            this->fractal[12][12];
-            this->fractal[13][17];
-            this->fractal[13][11];
-            this->fractal[15][18];
+            this->fractal[10][10] = true;
+            this->fractal[11][11]= true;
+            this->fractal[9][9]= true;
+
 
         }
 
@@ -46,7 +41,7 @@ class FRACTAL {
             for (auto i = 0; i < WIDTH; ++i)
                 for (auto j = 0; j < HEIGHT; ++j) {
 
-                    auto Neighborhood = getNeighborhood(i,j);
+                    auto Neighborhood = getNeighborhood(i,j,fractal);
 
                     auto oldSelf = 0;
                     auto newSelf = 0;
@@ -59,11 +54,11 @@ class FRACTAL {
                     }
                     else{
 
-                        oldSelf = fractal[i][j];
-                        newSelf = ( 2 + (parity(Neighborhood) - oldSelf)) % 2;
-
-                        oldSelf = ( 2 + (parity(Neighborhood) - newSelf)) % 2;
-                        newSelf = ( 2 + (parity(Neighborhood) - oldSelf)) % 2;
+//                          newSelf = fractal[i][j];
+//                        newSelf = ( 2 + (parity(Neighborhood) - oldSelf)) % 2;
+//
+//                        oldSelf = ( 2 + (parity(Neighborhood) - newSelf)) % 2;
+//                        newSelf = ( 2 + (parity(Neighborhood) - oldSelf)) % 2;
                     }
 
                     fractal[i][j] = newSelf;
@@ -82,14 +77,25 @@ class FRACTAL {
 
         bool** fractal; bool swap;
 
-        static int getNeighborhood(int i, int j) {
+        static int getNeighborhood(int i, int j, bool** fractal) {
 
             auto Neighborhood = 0;
 
-            if( j - 1 >= 0 && i + 1 < WIDTH ) Neighborhood++;
-            if( j + 1 < HEIGHT && i + 1 < WIDTH ) Neighborhood++;
-            if( j - 1 >= 0 && i - 1 >= 0 ) Neighborhood++;
-            if( j + 1 < HEIGHT && i - 1 >= 0 ) Neighborhood++;
+            if( j - 1 >= 0 && i + 1 < WIDTH )
+                if(fractal[j-1][i+1])
+                    Neighborhood++;
+
+            if( j + 1 < HEIGHT && i + 1 < WIDTH )
+                if(fractal[j+1][i+1])
+                    Neighborhood++;
+
+            if( j - 1 >= 0 && i - 1 >= 0 )
+                if(fractal[j-1][i-1])
+                    Neighborhood++;
+
+            if( j + 1 < HEIGHT && i - 1 >= 0 )
+                if(fractal[j+1][i-1])
+                    Neighborhood++;
 
             return Neighborhood;
 
