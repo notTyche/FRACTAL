@@ -10,6 +10,9 @@
 #define HEIGHT 120
 #define SCALE 5
 
+#include <iostream>
+using namespace std;
+
 class FRACTAL {
 
     public:
@@ -22,9 +25,19 @@ class FRACTAL {
             for (int i = 0; i < WIDTH; ++i)
                 this->fractal[i] = new bool[HEIGHT];
 
-            for (auto i = 0; i < WIDTH; ++i)
-                for (auto j = 0; j < HEIGHT; ++j)
-                    this->fractal[i][j] =  rand()%2;;
+//            for (auto i = 0; i < WIDTH; ++i)
+//                for (auto j = 0; j < HEIGHT; ++j)
+//                    this->fractal[i][j] =  rand()%2;
+
+            this->fractal[10][11];
+            this->fractal[11][12];
+            this->fractal[13][14];
+            this->fractal[20][21];
+            this->fractal[22][32];
+            this->fractal[12][12];
+            this->fractal[13][17];
+            this->fractal[13][11];
+            this->fractal[15][18];
 
         }
 
@@ -48,24 +61,18 @@ class FRACTAL {
 
                         oldSelf = fractal[i][j];
                         newSelf = ( 2 + (parity(Neighborhood) - oldSelf)) % 2;
+
                         oldSelf = ( 2 + (parity(Neighborhood) - newSelf)) % 2;
                         newSelf = ( 2 + (parity(Neighborhood) - oldSelf)) % 2;
                     }
 
-
                     fractal[i][j] = newSelf;
 
                 }
+
         }
 
         void changeRule(){ swap = !swap; }
-
-        virtual ~FRACTAL() {
-            for (int i = 0; i < WIDTH; ++i)
-                delete [] fractal[HEIGHT];
-            delete [] fractal;
-        }
-
 
         inline bool getCell(int i, int j) {
             return fractal[i][j];

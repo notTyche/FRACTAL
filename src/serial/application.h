@@ -8,8 +8,10 @@
 #include <allegro5/events.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
-#include <iostream>
 #include "FRACTAL.h"
+
+#include <iostream>
+using namespace std;
 
 class application {
 
@@ -40,7 +42,6 @@ class application {
 
             case ALLEGRO_EVENT_KEY_DOWN:
                 if(e->keyboard.keycode == ALLEGRO_KEY_M)
-                    std::cout<<"ok"<<std::endl;
                     fractal.changeRule();
 
 //                if(e->keyboard.keycode == ALLEGRO_KEY_F)
