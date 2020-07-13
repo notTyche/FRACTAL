@@ -5,12 +5,13 @@
 #ifndef FRACTAL_FRACTAL_H
 #define FRACTAL_FRACTAL_H
 
-#define GAME_FRAME_PER_SECOND 8.0
+#define GAME_FRAME_PER_SECOND 2.0
 #define WIDTH 120
 #define HEIGHT 120
 #define SCALE 5
 
 #include <iostream>
+#include <bitset>
 using namespace std;
 
 class FRACTAL {
@@ -25,13 +26,22 @@ class FRACTAL {
             for (int i = 0; i < WIDTH; ++i)
                 this->fractal[i] = new bool[HEIGHT];
 
+            this->fractalTemp = new bool* [WIDTH];
+            for (int i = 0; i < WIDTH; ++i)
+                this->fractalTemp[i] = new bool[HEIGHT];
+
             for (auto i = 0; i < WIDTH; ++i)
                 for (auto j = 0; j < HEIGHT; ++j)
                     this->fractal[i][j] =  false;
 
-            this->fractal[10][10] = true;
-            this->fractal[11][11]= true;
-            this->fractal[9][9]= true;
+            for (auto i = 0; i < WIDTH; ++i)
+                for (auto j = 0; j < HEIGHT; ++j)
+                    this->fractalTemp[i][j] =  false;
+
+
+            this->fractal[WIDTH/2][HEIGHT/2] = true;
+            this->fractal[WIDTH/2+1][HEIGHT/2+1]= true;
+            this->fractal[WIDTH/2-1][HEIGHT/2-1]= true;
 
 
         }
@@ -39,43 +49,58 @@ class FRACTAL {
         void future() {
 
             for (auto i = 0; i < WIDTH; ++i)
+                for (auto j = 0; j < HEIGHT; ++j)
+                    fractalTemp[i][j] = fractal[i][j];
+
+
+            for (auto i = 0; i < WIDTH; ++i)
                 for (auto j = 0; j < HEIGHT; ++j) {
 
-                    auto Neighborhood = getNeighborhood(i,j,fractal);
+                    auto Neighborhood = getNeighborhood(i, j, fractalTemp);
 
-                    auto oldSelf = 0;
-                    auto newSelf = 0;
-
-                    if(!swap){
-
-                        oldSelf = fractal[i][j];
-                        newSelf = ( 2 + (parity(Neighborhood) - oldSelf)) % 2;
-
-                    }
-                    else{
-
-//                          newSelf = fractal[i][j];
-//                        newSelf = ( 2 + (parity(Neighborhood) - oldSelf)) % 2;
-//
-//                        oldSelf = ( 2 + (parity(Neighborhood) - newSelf)) % 2;
-//                        newSelf = ( 2 + (parity(Neighborhood) - oldSelf)) % 2;
-                    }
+                    auto oldSelf = fractalTemp[i][j];
+                    auto newSelf = (2 + (parity(Neighborhood) - oldSelf)) % 2;
 
                     fractal[i][j] = newSelf;
-
                 }
+
+            if(swap) {
+
+                for (auto i = 0; i < WIDTH; ++i)
+                    for (auto j = 0; j < HEIGHT; ++j) {
+
+                        auto Neighborhood = getNeighborhood(i, j, fractal);
+
+                        auto newSelf = fractal[i][j];
+                        auto oldSelf = (2 + (parity(Neighborhood) - newSelf)) % 2;
+
+                        fractalTemp[i][j] = oldSelf;
+
+                        cout<<fractal[i][j]<<endl;
+                    }
+
+                for (auto i = 0; i < WIDTH; ++i)
+                    for (auto j = 0; j < HEIGHT; ++j)
+                        fractal[i][j] = fractalTemp[i][j];
+
+                    swap=false;
+            }
 
         }
 
-        void changeRule(){ swap = !swap; }
+        inline void changeRule(){ swap = !swap; }
 
         inline bool getCell(int i, int j) {
             return fractal[i][j];
         }
 
+        inline bool getSwap() const {
+            return swap;
+        }
+
     private:
 
-        bool** fractal; bool swap;
+        bool** fractal; bool swap; bool** fractalTemp;
 
         static int getNeighborhood(int i, int j, bool** fractal) {
 
@@ -101,7 +126,7 @@ class FRACTAL {
 
         }
 
-        static inline bool parity(int neighborhood) { return neighborhood % 2 == 0; }
+        static inline bool parity(int neighborhood) { return neighborhood % 2 != 0; }
 
 };
 

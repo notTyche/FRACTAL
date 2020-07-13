@@ -52,12 +52,7 @@ class application {
 
     }
 
-    inline void exit() {
-
-        running = false;
-        fractal.~FRACTAL();
-
-    }
+    inline void exit() { running = false; }
 
     inline auto isRunning() const { return running; }
 
