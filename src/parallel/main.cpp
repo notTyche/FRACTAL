@@ -8,29 +8,37 @@
 #include <allegro5/allegro_font.h>
 #include <cstdlib>
 #include <malloc.h>
+#include <random>
 
-#define MASTER           0
-#define DIM             20
-#define WIDTH           800
-#define HEIGHT          800
-#define SCALE            8
-#define FPS             2.0
+#define PRIMARY           0
+#define DIM             120
+#define WIDTH           600
+#define HEIGHT          600
+#define SCALE            5
+#define FPS             4.0
 
 ALLEGRO_DISPLAY * display;
 ALLEGRO_EVENT_QUEUE* queue;
 ALLEGRO_TIMER* timer;
 
+bool isRunning = true;
+bool isPaused = false;
+bool change = false;
 bool swapRule = false;
+
+inline int getUpper(const int& rank, const int& num_thread) { return rank == 0 ? num_thread - 1 : rank - 1; }
+
+inline int getLower(const int& rank, const int& num_thread) { return rank == num_thread - 1 ? 0 : rank + 1; }
 
 static inline bool parity(int neighborhood) { return neighborhood % 2 != 0; }
 
-static int getNeighborhood(const int &i, const int &j, const bool* fractal, const bool* topFractal, const bool* downFractal, int& rank, int& num_thread) {
+static int getNeighborhood(const int &i, const int &j, const bool* fractal, const bool* topFractal, const bool* downFractal, int& rank, int& num_thread, int& localDIM) {
 
     auto Neighborhood = 0;
 
-    if(i == 0) {
+    if(i == 0 && rank != PRIMARY) {
 
-        if( j - 1 > 0)
+        if( j - 1 >= 0)
             if(topFractal[j-1])
                 Neighborhood++;
 
@@ -38,31 +46,32 @@ static int getNeighborhood(const int &i, const int &j, const bool* fractal, cons
             if(topFractal[j+1])
                 Neighborhood++;
 
-        if( i + 1 < DIM && j + 1 < DIM )
+        if( i + 1 < localDIM && j + 1 < DIM )
             if(fractal[(i+1) * DIM + (j+1)])
                 Neighborhood++;
 
-        if( i + 1 < DIM && j - 1 >= 0 )
+        if( i + 1 < localDIM && j - 1 >= 0 )
             if(fractal[(i+1) * DIM + (j-1)])
                 Neighborhood++;
 
     }
 
-    else if(i == DIM-1 ) {
+    else if(i == localDIM - 1 && rank != num_thread - 1) {
 
-        if( j - 1 > 0)
+        if( j - 1 >= 0)
             if(downFractal[j-1])
                 Neighborhood++;
+
 
         if( j + 1 < DIM)
             if(downFractal[j+1])
                 Neighborhood++;
 
-        if( i - 1 < DIM && j + 1 < DIM )
+        if( i - 1 >= 0 && j + 1 < DIM )
             if(fractal[(i-1) * DIM + (j+1)])
                 Neighborhood++;
 
-        if( i - 1 < DIM && j - 1 >= 0 )
+        if( i - 1 >= 0 && j - 1 >= 0 )
             if(fractal[(i-1) * DIM + (j-1)])
                 Neighborhood++;
 
@@ -75,7 +84,7 @@ static int getNeighborhood(const int &i, const int &j, const bool* fractal, cons
                 Neighborhood++;
 
 
-        if( i + 1 < DIM && j + 1 < DIM)
+        if( i + 1 < localDIM && j + 1 < DIM)
             if(fractal[(i+1) * DIM + (j+1)])
                 Neighborhood++;
 
@@ -85,7 +94,7 @@ static int getNeighborhood(const int &i, const int &j, const bool* fractal, cons
                 Neighborhood++;
 
 
-        if( i + 1 < DIM && j - 1 >= 0)
+        if( i + 1 < localDIM && j - 1 >= 0)
             if(fractal[(i+1) * DIM + (j-1)])
                 Neighborhood++;
 
@@ -100,13 +109,20 @@ void update(ALLEGRO_EVENT* e) {
     switch(e -> type) {
 
         case ALLEGRO_EVENT_KEY_DOWN:
-            if(e->keyboard.keycode == ALLEGRO_KEY_M)
-                swapRule = !swapRule;
 
-//          if(e->keyboard.keycode == ALLEGRO_KEY_F)
-//              this->paused = !this->paused;  //TODO...
+        if(e -> keyboard.keycode == ALLEGRO_KEY_R)
+            swapRule = !swapRule;
 
-            break;
+        if(e -> keyboard.keycode == ALLEGRO_KEY_P)
+            isPaused = !isPaused;
+
+        if(e -> keyboard.keycode == ALLEGRO_KEY_E)
+            isRunning = !isRunning;
+
+        if(e -> keyboard.keycode == ALLEGRO_KEY_C)
+            change = !change;
+
+        break;
 
     }
 
@@ -126,9 +142,11 @@ void redraw(const bool* fractal, const int& generation) {
 
         }
 
-    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 730 , 780 , ALLEGRO_ALIGN_CENTRE, "Generation: %d" , generation);
-    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 724 , 10 , ALLEGRO_ALIGN_CENTRE, "Press P to pause" );
-    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 700 , 20 , ALLEGRO_ALIGN_CENTRE, "Press R to change rule" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 530 , 580 , ALLEGRO_ALIGN_CENTRE, "Generation: %d" , generation);
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 500 , 10 , ALLEGRO_ALIGN_CENTRE, "Press R to change rule" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 524 , 20 , ALLEGRO_ALIGN_CENTRE, "Press C to change pattern" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 524 , 30 , ALLEGRO_ALIGN_CENTRE, "Press P to pause" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 526 , 40 , ALLEGRO_ALIGN_CENTRE, "Press E to exit" );
     al_flip_display();
 }
 
@@ -137,7 +155,7 @@ void step(bool* subFractal, bool* subSupport, bool* topRow, bool* downRow, int& 
     for (auto i = 0; i < localDIM; ++i)
         for (auto j = 0; j < DIM; ++j) {
 
-            auto Neighborhood = getNeighborhood(i, j, subSupport, topRow, downRow, rank, num_thread);
+            auto Neighborhood = getNeighborhood(i, j, subSupport, topRow, downRow, rank, num_thread, localDIM);
 
             auto oldSelf = subSupport[i * DIM + j];
             auto newSelf = (2 + (parity(Neighborhood) - oldSelf)) % 2;
@@ -147,40 +165,57 @@ void step(bool* subFractal, bool* subSupport, bool* topRow, bool* downRow, int& 
         }
 }
 
-void sendHalo(int& rank, int& num_thread , int& localDIM, bool* subFractal, bool* topRow, bool* downRow)
-{
-    MPI_Status status;
 
-    if (rank == 0)
-    {
-        MPI_Send(&subFractal[(localDIM) * DIM - DIM], DIM, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD);
-        MPI_Send(&subFractal[0], DIM, MPI_C_BOOL, num_thread  - 1, 0, MPI_COMM_WORLD);
+void changePattern(bool* subFractal, const int& localDIM, int &rank, int &num_thread) {
 
-        MPI_Recv(downRow, DIM, MPI_C_BOOL, 1, 0, MPI_COMM_WORLD, &status);
-        MPI_Recv(topRow, DIM, MPI_C_BOOL, num_thread  - 1, 0, MPI_COMM_WORLD, &status);
+    for (auto i = 0; i < localDIM ; ++i)
+        for (auto j = 0; j < DIM; ++j)
+            subFractal[i * DIM + j] = false;
+
+    static bool init = false;
+    static std::random_device rd;
+    static std::mt19937 eng;
+    static std::uniform_int_distribution<int> dist(0,5);
+
+    if (!init) {
+        eng.seed(rd());
+        init = true;
     }
-    else if (rank == num_thread  - 1)
-    {
-        MPI_Send(&subFractal[(localDIM) * DIM - DIM], DIM, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD);
-        MPI_Send(&subFractal[0], DIM, MPI_C_BOOL, rank - 1, 0, MPI_COMM_WORLD);
 
-        MPI_Recv(downRow, DIM, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, &status);
-        MPI_Recv(topRow, DIM, MPI_C_BOOL, rank - 1, 0, MPI_COMM_WORLD, &status);
-    }
-    else
-    {
-        MPI_Send(&subFractal[(localDIM) * DIM - DIM], DIM, MPI_C_BOOL, rank + 1, 0, MPI_COMM_WORLD);
-        MPI_Send(&subFractal[0], DIM, MPI_C_BOOL, rank - 1, 0, MPI_COMM_WORLD);
+    auto choice = dist(eng);
 
-        MPI_Recv(topRow, DIM, MPI_C_BOOL, rank - 1, 0, MPI_COMM_WORLD, &status);
-        MPI_Recv(downRow, DIM, MPI_C_BOOL, rank + 1, 0, MPI_COMM_WORLD, &status);
+
+    switch (choice) {
+
+        case 0:
+            subFractal[localDIM/2 * DIM + DIM/2] = true;
+            break;
+
+        case 1:
+            subFractal[localDIM/2 * DIM + DIM/2 - 1] = true;
+            break;
+
+        case 2:
+            subFractal[localDIM/2 + 1 * DIM + DIM/2 + 1] = true;
+            break;
+
+        case 3:
+            subFractal[localDIM/2 * DIM + localDIM/2] = true;
+            break;
+
+        case 4:
+            subFractal[localDIM/2 * DIM + DIM/2] = true;
+            break;
+
+        case 5:
+            subFractal[localDIM/2 * DIM ] = true;
+            break;
+
     }
+
 }
 
-
 int main(int argc, char *argv[]) {
-
-    bool isRunning = true;
 
     //MPI INIT
     int num_thread, rank;
@@ -213,11 +248,12 @@ int main(int argc, char *argv[]) {
     bool * subFractal = (bool*) calloc(1,DIM * localDIM  * sizeof(bool));
     bool * subSupport = (bool*) calloc(1,DIM * localDIM  * sizeof(bool));
 
+
     bool * topRow = (bool*) calloc(1, DIM * sizeof(bool));
     bool * downRow = (bool*) calloc(1,DIM * sizeof(bool));
 
 
-    if(rank == MASTER){
+    if(rank == PRIMARY){
 
         if ((queue = al_create_event_queue()) == nullptr)
             return std::cerr << "al_create_event_queue() failed!" << std::endl, 1;
@@ -238,115 +274,51 @@ int main(int argc, char *argv[]) {
 
 
         fractal[(DIM/2) * DIM + (DIM/2)] = true;
-//        fractal[(DIM/2+1) * DIM + (DIM/2+1)] = true;
-//        fractal[(DIM/2-1) * DIM + (DIM/2-1)] = true;
+        fractal[(DIM/2 + 1) * DIM + (DIM/2 + 1)] = true;
+        fractal[(DIM/2 - 1) * DIM + (DIM/2 - 1)] = true;
+
     }
 
 
 
-    MPI_Scatter (fractal, DIM * localDIM , MPI_C_BOOL, subFractal,DIM * localDIM ,MPI_C_BOOL, MASTER, MPI_COMM_WORLD);
+    MPI_Scatter (fractal, DIM * localDIM , MPI_C_BOOL, subFractal,DIM * localDIM ,MPI_C_BOOL, PRIMARY, MPI_COMM_WORLD);
 
-    int topGhost = rank == 0 ? num_thread - 1 : rank - 1;
-    int downGhost = rank == num_thread - 1 ? 0 : rank + 1;
+    auto upper = getUpper(rank, num_thread);
+    auto lower = getLower(rank, num_thread);
 
+    for(auto it = 0; it < 1000 && isRunning; ++it) {
 
-    for(auto it = 0; it < 2 && isRunning; ++it) {
+        if(change) {
 
+            changePattern(subFractal, localDIM, rank, num_thread);
+            change = false;
 
-            MPI_Send(&subFractal[0], DIM, MPI_C_BOOL, topGhost, 1, MPI_COMM_WORLD);
-            MPI_Send(&subFractal[(localDIM) * DIM - DIM], DIM, MPI_C_BOOL, downGhost, 2, MPI_COMM_WORLD);
-
-            MPI_Recv(downRow, DIM, MPI_C_BOOL, downGhost, 1, MPI_COMM_WORLD, &status);
-            MPI_Recv(topRow, DIM, MPI_C_BOOL, topGhost, 2, MPI_COMM_WORLD, &status);
-
-        //sendHalo(rank, num_thread , localDIM, subFractal, topRow, downRow);
-
-        for (auto i = 0; i < localDIM; ++i)
-            for (auto j = 0; j < DIM; ++j)
-                subSupport[i * DIM + j] = subFractal[i * DIM + j];
-
-
-        if (rank == 1) {
-
-            std::cerr<<"********init****************"<<"   ----------> "<<rank<<std::endl;
-
-            for (auto j = 0; j < DIM; ++j)
-                std::cerr<<topRow[j]<<" ";
-            std::cerr<<std::endl;
-            for (auto i = 0; i < localDIM; ++i){
-                for (auto j = 0; j < DIM; ++j)
-                    std::cerr<<subFractal[i * DIM + j]<<" ";
-                std::cerr<<std::endl;}
-            for (auto j = 0; j < DIM; ++j)
-                std::cerr<<downRow[j]<<" ";
-            std::cerr<<std::endl;
-
-            std::cerr<<std::endl;
         }
 
-        if (rank == 1) {
+        if(!isPaused) {
 
-            std::cerr<<"********VECCHIA****************"<<std::endl;
+            MPI_Send(&subFractal[0], DIM, MPI_C_BOOL, upper, 1, MPI_COMM_WORLD);
+            MPI_Send(&subFractal[(localDIM) * DIM - DIM], DIM, MPI_C_BOOL, lower, 2, MPI_COMM_WORLD);
 
-            for (auto j = 0; j < DIM; ++j)
-                std::cerr<<topRow[j]<<" ";
-            std::cerr<<std::endl;
-            for (auto i = 0; i < localDIM; ++i){
+            MPI_Recv(downRow, DIM, MPI_C_BOOL, lower, 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(topRow, DIM, MPI_C_BOOL, upper, 2, MPI_COMM_WORLD, &status);
+
+
+            for (auto i = 0; i < localDIM; ++i)
                 for (auto j = 0; j < DIM; ++j)
-                    std::cerr<<subSupport[i * DIM + j]<<" ";
-                std::cerr<<std::endl;}
-            for (auto j = 0; j < DIM; ++j)
-                std::cerr<<downRow[j]<<" ";
-            std::cerr<<std::endl;
-
-            std::cerr<<std::endl;
-        }
+                    subSupport[i * DIM + j] = subFractal[i * DIM + j];
 
 
+            step(subFractal, subSupport, topRow, downRow, localDIM, rank, num_thread);
 
-        step(subFractal, subSupport, topRow, downRow, localDIM, rank, num_thread);
+
+            MPI_Gather(subFractal, DIM * (localDIM), MPI_C_BOOL, fractal, DIM * (localDIM), MPI_C_BOOL, PRIMARY, MPI_COMM_WORLD);
+
+        } else it--;
 
 
-        if (rank == 1) {
 
-            std::cerr<<"********VECCHIA****************"<<std::endl;
-
-            for (auto j = 0; j < DIM; ++j)
-                std::cerr<<topRow[j]<<" ";
-            std::cerr<<std::endl;
-            for (auto i = 0; i < localDIM; ++i){
-                for (auto j = 0; j < DIM; ++j)
-                    std::cerr<<subSupport[i * DIM + j]<<" ";
-                std::cerr<<std::endl;}
-            for (auto j = 0; j < DIM; ++j)
-                std::cerr<<downRow[j]<<" ";
-            std::cerr<<std::endl;
-
-            std::cerr<<std::endl;
-        }
-
-        if (rank == 1) {
-
-            std::cerr<<"********NUOVA*****************"<<std::endl;
-
-            for (auto j = 0; j < DIM; ++j)
-                std::cerr<<topRow[j]<<" ";
-            std::cerr<<std::endl;
-            for (auto i = 0; i < localDIM; ++i){
-                for (auto j = 0; j < DIM; ++j)
-                    std::cerr<<subFractal[i * DIM + j]<<" ";
-                std::cerr<<std::endl;
-            }
-            for (auto j = 0; j < DIM; ++j)
-                std::cerr<<downRow[j]<<" ";
-            std::cerr<<std::endl;
-
-            std::cerr<<std::endl;
-        }
-
-        MPI_Gather(subFractal, DIM * (localDIM), MPI_C_BOOL, fractal, DIM * (localDIM), MPI_C_BOOL, MASTER, MPI_COMM_WORLD);
-
-        if (rank == MASTER) {
+        if (rank == PRIMARY) {
 
             ALLEGRO_EVENT e;
 
@@ -370,13 +342,19 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        al_rest(1);
+        MPI_Bcast( &swapRule, 1, MPI_C_BOOL, PRIMARY, MPI_COMM_WORLD );
+        MPI_Bcast( &isPaused, 1, MPI_C_BOOL, PRIMARY, MPI_COMM_WORLD );
+        MPI_Bcast( &isRunning, 1, MPI_C_BOOL, PRIMARY, MPI_COMM_WORLD );
+        MPI_Bcast( &change, 1, MPI_C_BOOL, PRIMARY, MPI_COMM_WORLD );
+
+
+        al_rest(0.15);
     }
 
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    if (rank==MASTER){
+    if (rank= = PRIMARY){
         fine=MPI_Wtime();
         std::cerr<<"Parallel execution time: "<<fine-start<<std::endl;
     }
