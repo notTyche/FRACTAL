@@ -26,7 +26,7 @@ class application {
         for(auto x = 0; x < WIDTH ; x++)
             for(auto y = 0; y < HEIGHT ; y++) {
 
-                if(!fractal.getCell(x, y))
+                if(!(fractal.getCell(x, y) & 1))
                     continue;
 
                 al_draw_filled_rectangle(x*SCALE ,y*SCALE , x*SCALE+SCALE, y*SCALE+SCALE, al_map_rgb(0x29,0x62,0xFF));
@@ -43,9 +43,6 @@ class application {
             case ALLEGRO_EVENT_KEY_DOWN:
                 if(e->keyboard.keycode == ALLEGRO_KEY_M)
                     fractal.changeRule();
-
-//                if(e->keyboard.keycode == ALLEGRO_KEY_F)
-//                    this->paused = !this->paused;  //TODO...
                 break;
 
         }
