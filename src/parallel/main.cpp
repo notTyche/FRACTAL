@@ -31,6 +31,7 @@ bool swapRule = false;
 bool cleaned = false;
 bool clickedON = false;
 bool advance = true;
+bool screenEmpty = false;
 
 inline int getUpper(const int& rank, const int& num_thread) { return rank == 0 ? num_thread - 1 : rank - 1; }
 
@@ -428,7 +429,7 @@ int main(int argc, char *argv[]) {
             return std::cerr << "al_create_timer() failed!" << std::endl, 1;
 
         if ((timer_draw = al_create_timer(1 / FPS)) == nullptr)
-            return std::cerr << "al_create_timer() failed!" << std::endl, 1;
+            return std::cerr << "al_create_timer_draw() failed!" << std::endl, 1;
 
 
         al_register_event_source(queue, al_get_keyboard_event_source());
@@ -458,6 +459,8 @@ int main(int argc, char *argv[]) {
 
     for(auto it = 0; it < 10000000 && isRunning; ) {
 
+        if(screenEmpty)
+            restart(it);
 
         if(change) {
 
@@ -491,20 +494,25 @@ int main(int argc, char *argv[]) {
 
             restart(it);
             change = false;
-
+            screenEmpty = false;
         }
 
 
         if(cleaned){
 
             restart(it);
+
+            if(rank == PRIMARY)
+                clean(fractal);
+
             clean(plane, planeSupport, localDIM);
             cleaned = false;
+            screenEmpty = true;
 
         }
 
 
-        if(!isPaused) {
+        if(!isPaused && !screenEmpty) {
 
 
             MPI_Send(&plane[0], DIM, MPI_INT, upper, 1, MPI_COMM_WORLD);
@@ -523,7 +531,6 @@ int main(int argc, char *argv[]) {
 
 
             MPI_Gather(plane, DIM * (localDIM), MPI_INT, fractal, DIM * (localDIM), MPI_INT, PRIMARY, MPI_COMM_WORLD);
-
 
         }
 
@@ -610,6 +617,7 @@ int main(int argc, char *argv[]) {
             clean(temp_event);
             clean(temp, localDIM);
             clickedON = false;
+            screenEmpty = false;
         }
 
 

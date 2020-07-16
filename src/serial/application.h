@@ -8,6 +8,7 @@
 #include <allegro5/events.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_font.h>
 #include "FRACTAL.h"
 
 #include <iostream>
@@ -19,19 +20,42 @@ class application {
 
     application(): running(true) {}
 
-    void draw(ALLEGRO_EVENT* e){
+    void draw(ALLEGRO_EVENT* e, int& generation){
 
         al_clear_to_color(al_map_rgb(0, 0, 0));
 
-        for(auto x = 0; x < WIDTH ; x++)
-            for(auto y = 0; y < HEIGHT ; y++) {
+        for (auto i = 0; i < WIDTH; ++i)
+            for (auto j = 0; j < HEIGHT; ++j){
 
-                if(!(fractal.getCell(x, y) & 1))
+
+                if(fractal.getCell(i,j))
                     continue;
 
-                al_draw_filled_rectangle(x*SCALE ,y*SCALE , x*SCALE+SCALE, y*SCALE+SCALE, al_map_rgb(0x29,0x62,0xFF));
+                else if(fractal.getNeighborhood(i, j) == 1) {
+
+                    al_draw_filled_rectangle(j * SCALE, i * SCALE, j * SCALE + SCALE, i * SCALE + SCALE,al_map_rgb(0, 255, 0));
+                    continue;
+
+                }
+
+                else if(fractal.getNeighborhood(i, j) == 2) {
+
+                    al_draw_filled_rectangle(j * SCALE, i * SCALE, j * SCALE + SCALE, i * SCALE + SCALE,al_map_rgb(255, 0, 0));
+                    continue;
+                }
+
+                al_draw_filled_rectangle(j * SCALE, i * SCALE, j * SCALE + SCALE, i * SCALE + SCALE, al_map_rgb(0, 0, 255));
 
             }
+
+
+        al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 730 , 780 , ALLEGRO_ALIGN_CENTRE, "Generation: %d" , generation);
+        al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 682 , 10 , ALLEGRO_ALIGN_CENTRE, "Press X to clear the screen" );
+        al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 690 , 30 , ALLEGRO_ALIGN_CENTRE, "Press C to change pattern" );
+        al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 702 , 50 , ALLEGRO_ALIGN_CENTRE, "Press R to change rule" );
+        al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 726 , 70 , ALLEGRO_ALIGN_CENTRE, "Press P to pause" );
+        al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 730 , 90 , ALLEGRO_ALIGN_CENTRE, "Press E to exit" );
+        al_flip_display();
 
         fractal.future();
     }
