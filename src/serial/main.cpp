@@ -5,6 +5,7 @@
 #include "application.h"
 #include <iostream>
 #include <cstdlib>
+#include <mpi.h>
 #include <allegro5/allegro.h>
 
 #define SCREEN_WIDTH  600
@@ -72,10 +73,15 @@ int main(int argc, char** argv) {
 //    al_destroy_display(disp);
 
     FRACTAL f;
+    double start = 0.0 , fine;
+    start = MPI_Wtime();
 
-    for (int i = 0; i < 1000000; ++i) {
+    for (int i = 0; i < 100; ++i) {
         f.future();
     }
+
+    fine = MPI_Wtime();
+    std::cerr<<"Parallel execution time: "<<fine-start<<std::endl;
 
     return 0;
 }

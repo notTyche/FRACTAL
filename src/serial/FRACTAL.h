@@ -5,10 +5,10 @@
 #ifndef FRACTAL_FRACTAL_H
 #define FRACTAL_FRACTAL_H
 
-#define GAME_FRAME_PER_SECOND 2.0
-#define WIDTH 120
-#define HEIGHT 120
-#define SCALE 5
+#define GAME_FRAME_PER_SECOND    24.0
+#define WIDTH                    100
+#define HEIGHT                   100
+#define SCALE                 (800/WIDTH)
 
 #include <iostream>
 #include <bitset>
@@ -45,21 +45,21 @@ class FRACTAL {
 
     void future() {
 
-        if(swap) {
-
-            for (auto i = 0; i < WIDTH; ++i)
-                for (auto j = 0; j < HEIGHT; ++j) {
-
-                    auto b1 = fractal[i][j] & 1;
-                    auto b2 = (fractal[i][j] & 2) >> 1;
-
-                    fractal[i][j] = b2 | (b1 << 1);
-
-                }
-
-            changeRule();
-
-        }
+//        if(swap) {
+//
+//            for (auto i = 0; i < WIDTH; ++i)
+//                for (auto j = 0; j < HEIGHT; ++j) {
+//
+//                    auto b1 = fractal[i][j] & 1;
+//                    auto b2 = (fractal[i][j] & 2) >> 1;
+//
+//                    fractal[i][j] = b2 | (b1 << 1);
+//
+//                }
+//
+//            changeRule();
+//
+//        }
 
         for (auto i = 0; i < WIDTH; ++i)
             for (auto j = 0; j < HEIGHT; ++j) {

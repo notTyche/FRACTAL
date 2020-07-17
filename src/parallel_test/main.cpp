@@ -3,12 +3,10 @@
 //
 
 #include <mpi.h>
-#include <allegro5/allegro.h>
 #include <malloc.h>
 
 #define PRIMARY           0
-#define DIM             100
-#define FPS             24.0
+#define DIM              1000
 
 inline int getUpper(const int& rank, const int& num_thread) { return rank == 0 ? num_thread - 1 : rank - 1; }
 
@@ -121,12 +119,14 @@ void step(int* plane, int * planeSupport, int* topRow, int* downRow, int& localD
 
 int main(int argc, char *argv[]) {
 
+
     int num_thread, rank;
     MPI_Status status;
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &num_thread);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     double start = 0.0 , fine;
+
 
     int localDIM  = DIM / num_thread;
 
@@ -151,15 +151,17 @@ int main(int argc, char *argv[]) {
     auto lower = getLower(rank, num_thread);
 
     if(rank == PRIMARY){
-        fractal[(DIM/2) * DIM + (DIM/2)] = 1;
+
         start = MPI_Wtime();
+        fractal[(DIM/2) * DIM + (DIM/2)] = 1;
+
     }
 
 
     MPI_Scatter (fractal, DIM * localDIM , MPI_INT, plane,DIM * localDIM ,MPI_INT, PRIMARY, MPI_COMM_WORLD);
 
 
-    for(auto it = 0; it < 10000; ++it) {
+    for(auto it = 0; it < 1000; ++it) {
 
 
         MPI_Send(&plane[0], DIM, MPI_INT, upper, 1, MPI_COMM_WORLD);
@@ -171,6 +173,7 @@ int main(int argc, char *argv[]) {
         step(plane, planeSupport, topRow, downRow, localDIM, rank, num_thread, it);
 
         MPI_Gather(plane, DIM * (localDIM), MPI_INT, fractal, DIM * (localDIM), MPI_INT, PRIMARY, MPI_COMM_WORLD);
+
 
     }
 

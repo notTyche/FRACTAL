@@ -20,9 +20,9 @@
 #define FPS             24.0
 
 ALLEGRO_DISPLAY * display;
-ALLEGRO_EVENT_QUEUE* queue;
-ALLEGRO_TIMER* timer;
-ALLEGRO_TIMER* timer_draw;
+ALLEGRO_EVENT_QUEUE * queue;
+ALLEGRO_TIMER * timer;
+ALLEGRO_TIMER * timer_draw;
 
 bool isRunning = true;
 bool isPaused = false;
@@ -35,11 +35,18 @@ bool screenEmpty = false;
 
 inline int getUpper(const int& rank, const int& num_thread) { return rank == 0 ? num_thread - 1 : rank - 1; }
 
+
 inline int getLower(const int& rank, const int& num_thread) { return rank == num_thread - 1 ? 0 : rank + 1; }
+
 
 inline void restart(int& it) { it = 0; }
 
+
+inline void next(int& it) { it++; }
+
+
 static inline bool parity(int neighborhood) { return neighborhood % 2 != 0; }
+
 
 static int getNeighborhood(const int &i, const int &j, const int* fractal, const int* topFractal, const int* downFractal, int& rank, int& num_thread, int& localDIM) {
 
@@ -121,6 +128,8 @@ static int getNeighborhood(const int &i, const int &j, const int* fractal, const
     return Neighborhood;
 }
 
+
+
 static int getNeighborhood(int i, int j, const int* fractal) {
 
     auto Neighborhood = 0;
@@ -151,34 +160,37 @@ static int getNeighborhood(int i, int j, const int* fractal) {
 }
 
 
+
 void clean(int* plane, int* planeSupport, const int& localDIM) {
 
-    #pragma omp for schedule(static)
-        for (auto i = 0; i < localDIM ; ++i)
-            for (auto j = 0; j < DIM; ++j){
-                plane[i * DIM + j] = 0;
-                planeSupport[i * DIM + j] = 0;
-            }
+    for (auto i = 0; i < localDIM ; ++i)
+        for (auto j = 0; j < DIM; ++j){
+            plane[i * DIM + j] = 0;
+            planeSupport[i * DIM + j] = 0;
+        }
 
 }
+
+
 
 void clean(int* plane, const int& localDIM) {
 
-    #pragma omp for schedule(static)
-        for (auto i = 0; i < localDIM ; ++i)
-            for (auto j = 0; j < DIM; ++j)
-                plane[i * DIM + j] = 0;
+    for (auto i = 0; i < localDIM ; ++i)
+        for (auto j = 0; j < DIM; ++j)
+            plane[i * DIM + j] = 0;
 
 }
 
+
+
 void clean(int* plane) {
 
-    #pragma omp for schedule(static)
     for (auto i = 0; i < DIM ; ++i)
         for (auto j = 0; j < DIM; ++j)
             plane[i * DIM + j] = 0;
 
 }
+
 
 
 void update(ALLEGRO_EVENT* e, std::list<int>& fractal_event) {
@@ -196,10 +208,10 @@ void update(ALLEGRO_EVENT* e, std::list<int>& fractal_event) {
             if(e -> keyboard.keycode == ALLEGRO_KEY_E)
                 isRunning = !isRunning;
 
-            if(e -> keyboard.keycode == ALLEGRO_KEY_C)
+            if(e -> keyboard.keycode == ALLEGRO_KEY_X)
                 change = !change;
 
-            if(e -> keyboard.keycode == ALLEGRO_KEY_X)
+            if(e -> keyboard.keycode == ALLEGRO_KEY_C)
                 cleaned = !cleaned;
 
             break;
@@ -221,6 +233,8 @@ void update(ALLEGRO_EVENT* e, std::list<int>& fractal_event) {
 
 }
 
+
+
 void redraw(const int* fractal, const int& generation) {
 
     al_clear_to_color(al_map_rgb(0, 0, 0));
@@ -241,37 +255,41 @@ void redraw(const int* fractal, const int& generation) {
 
             else if(getNeighborhood(i, j, fractal) == 2) {
 
-                al_draw_filled_rectangle(j * SCALE, i * SCALE, j * SCALE + SCALE, i * SCALE + SCALE,al_map_rgb(255, 0, 0));
+                al_draw_filled_rectangle(j * SCALE, i * SCALE, j * SCALE + SCALE, i * SCALE + SCALE,al_map_rgb(0, 0, 255));
                 continue;
             }
 
-            al_draw_filled_rectangle(j * SCALE, i * SCALE, j * SCALE + SCALE, i * SCALE + SCALE, al_map_rgb(0, 0, 255));
+            al_draw_filled_rectangle(j * SCALE, i * SCALE, j * SCALE + SCALE, i * SCALE + SCALE, al_map_rgb(255, 0, 0));
 
         }
 
 
     al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 730 , 780 , ALLEGRO_ALIGN_CENTRE, "Generation: %d" , generation);
-    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 682 , 10 , ALLEGRO_ALIGN_CENTRE, "Press X to clear the screen" );
-    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 690 , 30 , ALLEGRO_ALIGN_CENTRE, "Press C to change pattern" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 682 , 10 , ALLEGRO_ALIGN_CENTRE, "Press C to clear the screen" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 690 , 30 , ALLEGRO_ALIGN_CENTRE, "Press X to change pattern" );
     al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 702 , 50 , ALLEGRO_ALIGN_CENTRE, "Press R to change rule" );
     al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 726 , 70 , ALLEGRO_ALIGN_CENTRE, "Press P to pause" );
     al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 730 , 90 , ALLEGRO_ALIGN_CENTRE, "Press E to exit" );
     al_flip_display();
 }
 
-void step(int* plane, int * planeSupport, int* topRow, int* downRow, int& localDIM, int& rank, int& num_thread, int& it){
+
+
+void step(int* plane, int* planeSupport, int* topRow, int* downRow, int& localDIM, int& rank, int& num_thread, int& it){
 
     // ANNOTATION:
     // mem                       -----> first bit of right - shift of current self
     // Neighborhood              -----> sum of ( NE + NO + SE + SO ) of current self and mem
-    // newSelf                   -----> *parity of Neighborhood
+    // newSelf                   -----> * parity of Neighborhood
     // planeSupport[i * DIM + j] -----> first bit of left - shift of plane[i * DIM + j] or newSelf
+    // swapRule                  -----> inverts the equation to return to the initial fractal
     // * true if is odd
 
 
     if(swapRule) {
 
-        #pragma omp for schedule(static)
+        //reverses ghost cell
+
         for (auto j = 0; j < DIM; ++j) {
 
             auto b1 = topRow[j] & 1;
@@ -281,7 +299,7 @@ void step(int* plane, int * planeSupport, int* topRow, int* downRow, int& localD
 
         }
 
-        #pragma omp for schedule(static)
+
         for (auto j = 0; j < DIM; ++j) {
 
             auto b1 = downRow[j] & 1;
@@ -291,7 +309,9 @@ void step(int* plane, int * planeSupport, int* topRow, int* downRow, int& localD
 
         }
 
-        #pragma omp for schedule(static)
+
+        //reverses thread plane
+
         for (auto i = 0; i < localDIM; ++i)
             for (auto j = 0; j < DIM; ++j) {
 
@@ -305,7 +325,9 @@ void step(int* plane, int * planeSupport, int* topRow, int* downRow, int& localD
         swapRule = false;
     }
 
-    #pragma omp for schedule(static)
+
+
+
     for (auto i = 0; i < localDIM; ++i)
         for (auto j = 0; j < DIM; ++j) {
 
@@ -318,54 +340,39 @@ void step(int* plane, int * planeSupport, int* topRow, int* downRow, int& localD
 
         }
 
+
     memcpy(plane, planeSupport, DIM * localDIM * sizeof(int));
 }
 
-void changePattern(int* plane, int* planeSupport, const int& localDIM, int &rank, int &num_thread) {
 
-    clean(plane, planeSupport, localDIM);
+int generateRandom(const int& start, const int& end){
 
     static bool init = false;
     static std::random_device rd;
     static std::mt19937 eng;
-    static std::uniform_int_distribution<int> dist(0,5);
+    static std::uniform_int_distribution<int> dist(start, end);
 
     if (!init) {
         eng.seed(rd());
         init = true;
     }
 
-    auto choice = dist(eng);
-
-    switch (choice) {
-
-        case 0:
-            plane[localDIM/2 * DIM + (DIM/2 + 1)] = 1;
-            break;
-
-        case 1:
-            plane[(localDIM/2 - 2) * DIM + (DIM/2 - 8)] = 1;
-            break;
-
-        case 2:
-            plane[(localDIM/2 - 1) * DIM + (DIM/2 + 6)] = 1;
-            break;
-
-        case 3:
-            plane[(localDIM/2 + 4) * DIM + (DIM/2 + 4)] = 1;
-            break;
-
-        case 4:
-            plane[(localDIM/2 + 2) * DIM + (DIM/2 - 2)] = 1;
-            break;
-
-        case 5:
-            plane[(localDIM/2) * DIM + (DIM/2 + 6)] = 1;
-            break;
-
-    }
+    return dist(eng);
 
 }
+
+
+void changePattern(int* plane, int* planeSupport, const int& localDIM, int &rank, int &num_thread) {
+
+    clean(plane, planeSupport, localDIM);
+
+    auto y = generateRandom(0, localDIM - 1);
+    auto x = generateRandom(0, DIM);
+
+    plane[y * DIM + x] = 1;
+
+}
+
 
 int main(int argc, char *argv[]) {
 
@@ -375,7 +382,7 @@ int main(int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &num_thread);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    double start = 0.0 , fine;
+    double start = 0.0 , end;
 
     //ALLEGRO INIT
     al_init();
@@ -386,10 +393,12 @@ int main(int argc, char *argv[]) {
     al_set_window_title(display, "FRACTAL");
 
 
+
     int localDIM  = DIM / num_thread;
 
     if (rank == num_thread - 1)
         localDIM  += DIM % num_thread;
+
 
 
     int *fractal = (int*) calloc(1,DIM * DIM * sizeof(int));
@@ -397,6 +406,7 @@ int main(int argc, char *argv[]) {
     for (auto i = 0; i < DIM ; ++i)
         for (auto j = 0; j < DIM; ++j)
             fractal[i * DIM + j] = 0;
+
 
 
     int * plane = (int*) calloc(1,DIM * localDIM  * sizeof(int));
@@ -407,6 +417,7 @@ int main(int argc, char *argv[]) {
     int * downRow = (int*) calloc(1,DIM * sizeof(int));
 
 
+
     int *temp_event = (int*) calloc(1,DIM * DIM * sizeof(int));
     int *temp = (int*) calloc(1,DIM * DIM * sizeof(int));
 
@@ -415,9 +426,13 @@ int main(int argc, char *argv[]) {
             temp_event[i * DIM + j] = 0;
 
 
+
     std::list<int> fractal_event;
 
+
+
     if(rank == PRIMARY){
+
 
         if ((queue = al_create_event_queue()) == nullptr)
             return std::cerr << "al_create_event_queue() failed!" << std::endl, 1;
@@ -450,6 +465,7 @@ int main(int argc, char *argv[]) {
     }
 
 
+
     MPI_Scatter (fractal, DIM * localDIM , MPI_INT, plane,DIM * localDIM ,MPI_INT, PRIMARY, MPI_COMM_WORLD);
 
 
@@ -457,7 +473,8 @@ int main(int argc, char *argv[]) {
     auto lower = getLower(rank, num_thread);
 
 
-    for(auto it = 0; it < 10000000 && isRunning; ) {
+
+    for(auto it = 0; it < 100000 && isRunning; ) {
 
         if(screenEmpty)
             restart(it);
@@ -466,25 +483,12 @@ int main(int argc, char *argv[]) {
 
             auto rankChoice = 0;
 
-            if(rank == PRIMARY){
-
-                static bool init = false;
-                static std::random_device rd;
-                static std::mt19937 eng;
-                static std::uniform_int_distribution<int> dist(0,num_thread - 1);
-
-                if (!init) {
-                    eng.seed(rd());
-                    init = true;
-                }
-
-                rankChoice = dist(eng);
-            }
+            if(rank == PRIMARY)
+                rankChoice = generateRandom(0, num_thread - 1);
 
 
             MPI_Bcast( &rankChoice, 1, MPI_INT, PRIMARY, MPI_COMM_WORLD );
 
-            MPI_Barrier(MPI_COMM_WORLD);
 
             if(rank == rankChoice)
                 changePattern(plane, planeSupport, localDIM, rankChoice, num_thread);
@@ -521,11 +525,12 @@ int main(int argc, char *argv[]) {
             MPI_Recv(downRow, DIM, MPI_INT, lower, 1, MPI_COMM_WORLD, &status);
             MPI_Recv(topRow, DIM, MPI_INT, upper, 2, MPI_COMM_WORLD, &status);
 
+
             if(advance) {
 
                 step(plane, planeSupport, topRow, downRow, localDIM, rank, num_thread, it);
+                next(it);
                 advance = false;
-                it++;
 
             }
 
@@ -558,7 +563,6 @@ int main(int argc, char *argv[]) {
                     case ALLEGRO_EVENT_KEY_UP:
                     case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
                     case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
-
                         update(&e, fractal_event);
                         break;
 
@@ -585,6 +589,7 @@ int main(int argc, char *argv[]) {
 
         if(rank == PRIMARY) {
 
+
             auto i = 0;
 
             while ( i < fractal_event.size()) {
@@ -597,6 +602,7 @@ int main(int argc, char *argv[]) {
 
                 temp_event[y * DIM + x] = 1;
             }
+
 
         }
 
@@ -618,18 +624,21 @@ int main(int argc, char *argv[]) {
             clean(temp, localDIM);
             clickedON = false;
             screenEmpty = false;
+
         }
 
 
     }
 
 
+
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (rank == PRIMARY){
-        fine=MPI_Wtime();
-        std::cerr<<"Parallel execution time: "<<fine-start<<std::endl;
+        end = MPI_Wtime();
+        std::cerr<<"Parallel execution time: "<< end - start<<std::endl;
     }
+
 
     MPI_Finalize();
 
