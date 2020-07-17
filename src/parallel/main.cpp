@@ -1,5 +1,8 @@
 //
-// Created by not_tyche on 04/07/20.
+// Created by Perfidio Matteo on 04/07/20.
+//
+// to compile :    mpic++ -lallegro_font -lallegro_main -lallegro_primitives -lallegro main.cpp -o1
+//                 mpirun ./1
 //
 
 #include <mpi.h>
@@ -263,19 +266,19 @@ void redraw(const int* fractal, const int& generation) {
 
         }
 
-
     al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 730 , 780 , ALLEGRO_ALIGN_CENTRE, "Generation: %d" , generation);
-    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 682 , 10 , ALLEGRO_ALIGN_CENTRE, "Press C to clear the screen" );
-    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 690 , 30 , ALLEGRO_ALIGN_CENTRE, "Press X to change pattern" );
-    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 702 , 50 , ALLEGRO_ALIGN_CENTRE, "Press R to change rule" );
-    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 726 , 70 , ALLEGRO_ALIGN_CENTRE, "Press P to pause" );
-    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 730 , 90 , ALLEGRO_ALIGN_CENTRE, "Press E to exit" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 656 , 10 , ALLEGRO_ALIGN_CENTRE, "Click MOUSE SX to generate fractal" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 682 , 30 , ALLEGRO_ALIGN_CENTRE, "Press C to clear the screen" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 690 , 50 , ALLEGRO_ALIGN_CENTRE, "Press X to change pattern" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 702 , 70 , ALLEGRO_ALIGN_CENTRE, "Press R to change rule" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 726 , 90 , ALLEGRO_ALIGN_CENTRE, "Press P to pause" );
+    al_draw_textf(al_create_builtin_font(), al_map_rgb(255,255,255) , 730 , 110 , ALLEGRO_ALIGN_CENTRE, "Press E to exit" );
     al_flip_display();
 }
 
 
 
-void step(int* plane, int* planeSupport, int* topRow, int* downRow, int& localDIM, int& rank, int& num_thread, int& it){
+void step(int* plane, int* planeSupport, int* topRow, int* downRow, int& localDIM, int& rank, int& num_thread){
 
     // ANNOTATION:
     // mem                       -----> first bit of right - shift of current self
@@ -528,7 +531,7 @@ int main(int argc, char *argv[]) {
 
             if(advance) {
 
-                step(plane, planeSupport, topRow, downRow, localDIM, rank, num_thread, it);
+                step(plane, planeSupport, topRow, downRow, localDIM, rank, num_thread);
                 next(it);
                 advance = false;
 
