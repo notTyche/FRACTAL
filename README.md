@@ -5,9 +5,11 @@ FRACTAL is the representation of a cellular automaton that produces nice fractal
 
 <p align="center">
   <img src="https://github.com/notTyche/FRACTAL/blob/master/media-1.jpg?raw=true" width="512">
+</p>
   <br>
   <hr>
   <br>
+<p align="center">
   <img src="https://github.com/notTyche/FRACTAL/blob/master/media-2.jpg?raw=true" width="512">
 </p>
 
